@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel Planner BD</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; background: #f0f7f4; color: #1c2b26; }
+  header { background: #0d5c46; color: #fff; padding: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 1.5rem; }
+  header p { margin: 0.25rem 0 0; opacity: 0.9; }
+  main { max-width: 960px; margin: 0 auto; padding: 1rem; }
+  .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .tab-btn { border: 1px solid #0d5c46; background: #fff; color: #0d5c46; padding: 0.5rem 1rem; border-radius: 999px; cursor: pointer; font-size: 1rem; }
+  .tab-btn.active { background: #0d5c46; color: #fff; }
+  .btn { background: #0d5c46; color: #fff; border: 0; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 1rem; }
+  .btn.small { padding: 0.25rem 0.6rem; font-size: 0.85rem; }
+  .btn.danger { background: #b3261e; }
+  .btn.ghost { background: #fff; color: #0d5c46; border: 1px solid #0d5c46; }
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+  .stat { background: #fff; border-radius: 10px; padding: 0.9rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .stat .label { font-size: 0.85rem; color: #556; }
+  .stat .value { font-size: 1.35rem; font-weight: 700; }
+  .card { background: #fff; border-radius: 10px; padding: 1rem; margin-bottom: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .muted { color: #556; }
+  .bar { background: #dcebe4; height: 10px; border-radius: 999px; overflow: hidden; margin: 0.5rem 0; }
+  .bar-fill { background: #0d5c46; height: 100%; }
+  form { background: #fff; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; display: grid; gap: 0.6rem; }
+  label { display: grid; gap: 0.25rem; font-size: 0.95rem; }
+  input, select, textarea { padding: 0.5rem; border: 1px solid #b9c9c2; border-radius: 6px; font-size: 1rem; width: 100%; }
+  .error { color: #b3261e; margin: 0; }
+  .ok { color: #0d5c46; margin: 0; }
+  .over { color: #b3261e; font-weight: 700; }
+  .hidden { display: none; }
+  .item-list { list-style: none; padding: 0; }
+  .item-list li { background: #fff; border-radius: 8px; padding: 0.6rem 0.75rem; margin-bottom: 0.5rem; }
+  .trip-chip { display: block; width: 100%; text-align: left; background: #fff; border: 1px solid #b9c9c2; border-radius: 8px; padding: 0.6rem 0.75rem; margin-bottom: 0.5rem; cursor: pointer; font-size: 1rem; }
+  .trip-chip.selected { border-color: #0d5c46; outline: 2px solid #0d5c46; }
+  footer { text-align: center; color: #556; padding: 1.5rem 1rem; font-size: 0.9rem; }
+  @media (max-width: 480px) {
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    header h1 { font-size: 1.25rem; }
+    main { padding: 0.75rem; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1 data-i18n="title">Travel Planner BD</h1>
+    <p data-i18n="subtitle">Plan trips across Bangladesh — itinerary, budget and packing in one place.</p>
+  </div>
+  <button class="btn ghost" id="lang-toggle">বাংলা</button>
+</header>
+<main>
+  <nav class="tabs" aria-label="Sections">
+    <button class="tab-btn active" data-tab="dashboard" data-i18n="tabDashboard">Dashboard</button>
+    <button class="tab-btn" data-tab="trips" data-i18n="tabTrips">Trips</button>
+    <button class="tab-btn" data-tab="data" data-i18n="tabData">Data</button>
+  </nav>
+
+  <section class="tab-panel" data-panel="dashboard">
+    <div class="stats">
+      <div class="stat"><div class="label" data-i18n="totalTrips">Total trips</div><div class="value" id="stat-total">0</div></div>
+      <div class="stat"><div class="label" data-i18n="upcomingTrips">Upcoming trips</div><div class="value" id="stat-upcoming">0</div></div>
+      <div class="stat"><div class="label" data-i18n="totalBudget">Total budget</div><div class="value" id="stat-budget">৳0.00</div></div>
+      <div class="stat"><div class="label" data-i18n="totalSpent">Total spent</div><div class="value" id="stat-spent">৳0.00</div></div>
+    </div>
+    <div class="card">
+      <h2 data-i18n="nextTrip">Next trip</h2>
+      <p id="next-trip"></p>
+    </div>
+    <div id="dashboard-trips"></div>
+  </section>
+
+  <section class="tab-panel hidden" data-panel="trips">
+    <form id="trip-form" novalidate>
+      <h2 data-i18n="addTrip">Add trip</h2>
+      <label><span data-i18n="tripName">Trip name</span><input id="trip-name" type="text"></label>
+      <label><span data-i18n="destination">Destination</span><input id="trip-dest" type="text"></label>
+      <label><span data-i18n="startDate">Start date</span><input id="trip-start" type="date"></label>
+      <label><span data-i18n="endDate">End date</span><input id="trip-end" type="date"></label>
+      <label><span data-i18n="budgetBDT">Budget (৳)</span><input id="trip-budget" type="number" min="0.01" step="0.01"></label>
+      <label><span data-i18n="notes">Notes (optional)</span><input id="trip-notes" type="text"></label>
+      <button class="btn" type="submit" data-i18n="add">Add</button>
+      <p class="error" id="trip-error"></p>
+    </form>
+    <div id="trip-list"></div>
+    <div id="trip-detail"></div>
+  </section>
+
+  <section class="tab-panel hidden" data-panel="data">
+    <div class="card">
+      <button class="btn" id="export-btn" data-i18n="exportBtn">Export JSON</button>
+      <p><label><span data-i18n="importBtn">Import JSON</span>
+        <textarea id="import-text" rows="6" data-i18n-ph="importPlaceholder" placeholder="Paste exported JSON here…"></textarea></label></p>
+      <button class="btn" id="import-btn" data-i18n="importBtn">Import JSON</button>
+      <p class="muted" data-i18n="eraseHint">Type DELETE in the box below to confirm, then press Erase all data.</p>
+      <p><input id="erase-confirm" type="text" data-i18n-ph="erasePlaceholder" placeholder="Type DELETE"></p>
+      <button class="btn danger" id="erase-btn" data-i18n="eraseBtn">Erase all data</button>
+      <p id="data-msg"></p>
+    </div>
+  </section>
+</main>
+<footer><span data-i18n="disclaimer">Offline personal planner. Budgets and expenses are your own records — not a booking or payment service.</span></footer>
+<script src="js/logic.js"></script>
+</body>
+</html>
